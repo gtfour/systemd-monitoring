@@ -5,7 +5,9 @@ import "os/exec"
 import "path/filepath"
 
 func FileExists(filepath string)(bool){
-    if _, err := os.Stat(filepath); err == nil {
+    //info.IsDir()
+    info,err := os.Stat(filepath)
+    if err == nil && info.IsDir() == false  {
         return true
     } else {
         return false

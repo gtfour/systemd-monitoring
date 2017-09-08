@@ -1,1 +1,1 @@
-export GOPATH=/usr/share/go:/scripts/systemd-monitoring
+export GOPATH=/usr/share/go:/systemd-monitoring

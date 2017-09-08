@@ -31,7 +31,7 @@ func parseInput()(secretPhrase string,masterIp string,masterPort string, filesLi
     if filesListPtr    != nil { files_list   = *filesListPtr    } else { err = parseError ; return }
     if serviceListPtr  != nil { service_list = *serviceListPtr  } else { err = parseError ; return }
     // 
-    filesList = files.ParseFileList(files_list)
+    filesList    = files.ParseFileList(files_list)
     serviceList  = strings.Split(service_list," ")
     return
     //
