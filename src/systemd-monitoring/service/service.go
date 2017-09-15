@@ -2,9 +2,11 @@ package service
 
 import "fmt"
 import "strconv"
+import "errors"
 import "os/exec"
 import "strings"
 
+var cantGetMainPid        = errors.New("can't get main pid")
 var systemctl_path string = "/bin/systemctl"
 
 
@@ -24,7 +26,7 @@ func(s *Service)String() string {
 }
 
 
-func CheckSystemdService(service_name string, )(*Service,error){
+func CheckSystemdService(service_name string)(*Service,error){
     //
     var service Service
     //
@@ -57,5 +59,33 @@ func CheckSystemdService(service_name string, )(*Service,error){
     return &service, nil
     //
     //
+}
+
+func GetServiceMainPid(service_name string)(main_pid int, err error){
+    main_pid          = -1
+    out_status_byte,_ := exec.Command(systemctl_path,"status",service_name).Output()
+    out_status        := string(out_status_byte)
+    status            := strings.Split(out_status, "\n")
+    main_pid_line     := ""
+    for i:= range status {
+        line:=status[i]
+        if strings.HasPrefix(line," Main PID:") {
+            main_pid_line = line
+            break
+        }
+    }
+    if main_pid_line == "" {
+        return -1, cantGetMainPid
+    }
+    main_pid_slice := strings.Split(main_pid_line," ")
+    for z := range main_pid_slice {
+        word         := main_pid_slice[z]
+        intWord, err := strconv.Atoi(word)
+        if err == nil {
+            main_pid = intWord
+            break
+        }
+    }
+    return
 }
 

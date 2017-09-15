@@ -95,6 +95,7 @@ func(t *Target)capture()(){
                 exit = true
         }
     }
+    fmt.Printf("capture has been finished for :%v\n",t.path)
     t.active = false
     t.cmd.Process.Kill()
     //
