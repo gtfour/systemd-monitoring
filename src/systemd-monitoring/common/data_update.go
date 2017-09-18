@@ -1,6 +1,6 @@
 package common
 
-var typeDataUpdate int = 2002
+var TypeDataUpdate int = 2002
 
 type DataUpdate struct {
     Hostname  string `json:"hostname"`

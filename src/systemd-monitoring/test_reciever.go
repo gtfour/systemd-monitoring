@@ -7,8 +7,8 @@ import "systemd-monitoring/reciever"
 
 func main() {
 
-    updates      := make(chan common.DataUpdate)
-    r,err:=reciever.NewReciever("0.0.0.0:8080","hello",updates)
+    updates := make(chan common.DataUpdate,100)
+    r,err   := reciever.NewReciever("0.0.0.0:8080","1234567890123456",updates)
     go r.Run()
     if err == nil {
         for {
@@ -18,9 +18,6 @@ func main() {
                 default:
                     time.Sleep(time.Second * 2)
             }
-
         }
     }
-
-
 }

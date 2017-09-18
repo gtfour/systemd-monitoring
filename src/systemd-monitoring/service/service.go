@@ -52,7 +52,7 @@ func CheckSystemdService(service_name string)(*Service,error){
     //
     var service Service
     service.name        = service_name
-    service.timeout_sec = 5
+    service.timeout_sec = 2
     //
     out_active_byte,_  := exec.Command(systemctl_path,"is-active",service_name).Output()
     out_enabled_byte,_ := exec.Command(systemctl_path,"is-enabled",service_name).Output()
@@ -152,7 +152,7 @@ func NewServiceChain(service_names []string, updates chan common.DataUpdate)(*Ch
     } else {
         return nil, err
     }
-    chain.timeout_sec  = 5
+    chain.timeout_sec  = 1
     chain.updates      = updates
     chain.processing   = make(chan *Service)
     return &chain, nil
@@ -223,7 +223,7 @@ func (c *Chain)Proceed()(){
                                 c.updates <- common.DataUpdate{c.hostname, changes[i],common.GetTime()}
                             }
                             // sleep if service has been changed
-                            time.Sleep(time.Second * c.timeout_sec)
+                            // time.Sleep(time.Second * c.timeout_sec)
                         }
                         time.Sleep(time.Second * s.timeout_sec)
                         c.processing <- currentServiceState
