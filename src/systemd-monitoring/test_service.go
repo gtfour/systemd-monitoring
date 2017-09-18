@@ -4,6 +4,6 @@ import "fmt"
 import "systemd-monitoring/service"
 
 func main() {
-    pid,err:=service.GetServiceMainPid("cron")
-    fmt.Printf("pid %d err %v\n",pid,err)
+    s,err:=service.CheckSystemdService("cron")
+    fmt.Printf("service: %v err %v\n",s,err)
 }
