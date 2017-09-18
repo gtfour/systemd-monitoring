@@ -11,6 +11,8 @@ import "systemd-monitoring/common"
 var cantGetMainPid               = errors.New("can't get main pid")
 var unableToRetrieveServiceInfo  = errors.New("unable to get service information")
 var serviceChainIsEmpty          = errors.New("service chain is empty")
+var updatesChanIsNil             = errors.New("updates chan is nil")
+
 var systemctl_path string        = "/bin/systemctl"
 var dead_pid                 int = -1
 var unrecognized_service_pid int = -3
@@ -128,9 +130,10 @@ func GetMainPid(service_name string)(main_pid int, err error){
     return
 }
 
-func NewServiceChain(service_names []string, updates chan common.DataUpdate)(c *Chain,err error){
+func NewServiceChain(service_names []string, updates chan common.DataUpdate)(*Chain,error){
     //
     //
+    if updates == nil { return nil, updatesChanIsNil }
     var chain Chain
     chain.services = make([]*Service,0)
     for i:= range service_names {
