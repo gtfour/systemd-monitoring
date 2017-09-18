@@ -1,6 +1,7 @@
 package common
 
 import "os"
+import "time"
 import "os/exec"
 import "path/filepath"
 
@@ -30,6 +31,11 @@ func Command(args []string) (cmd *exec.Cmd,err error) {
         }
     }
     return cmd, nil
+}
+
+func GetTime()(time_now string) {
+    t := time.Now()
+    return t.Format(time.RFC3339Nano)
 }
 
 

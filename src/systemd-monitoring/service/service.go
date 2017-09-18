@@ -6,6 +6,7 @@ import "os/exec"
 import "strconv"
 import "errors"
 import "strings"
+import "systemd-monitoring/common"
 
 var cantGetMainPid               = errors.New("can't get main pid")
 var unableToRetrieveServiceInfo  = errors.New("unable to get service information")
@@ -32,7 +33,7 @@ type Chain struct {
     hostname    string
     services    []*Service
     processing  chan *Service
-    updates     chan string
+    updates     chan common.DataUpdate
     timeout_sec time.Duration
     //
 }
@@ -127,7 +128,7 @@ func GetMainPid(service_name string)(main_pid int, err error){
     return
 }
 
-func NewServiceChain(service_names []string, updates chan string)(c *Chain,err error){
+func NewServiceChain(service_names []string, updates chan common.DataUpdate)(c *Chain,err error){
     //
     //
     var chain Chain
@@ -156,6 +157,7 @@ func NewServiceChain(service_names []string, updates chan string)(c *Chain,err e
     //
 }
 
+/*
 func (c *Chain)Proceed()(){
     //
     if c == nil { return }
@@ -168,7 +170,7 @@ func (c *Chain)Proceed()(){
                changes,err := Compare(s, currentServiceState)
                if err == nil && len(changes)>0 {
                    for i:= range changes {
-                       c.updates <- changes[i]
+                       c.updates <- common.DataUpdate{c.hostname, changes[i],common.GetTime()}
                    }
                }
            }
@@ -176,9 +178,10 @@ func (c *Chain)Proceed()(){
     }
     //
 }
+*/
 
 
-func (c *Chain)Proceed2()(){
+func (c *Chain)Proceed()(){
     //
     // init service chain
     //
@@ -214,7 +217,7 @@ func (c *Chain)Proceed2()(){
                         changes,err := Compare(s, currentServiceState)
                         if err == nil && len(changes)>0 {
                             for i:= range changes {
-                                c.updates <- "hostname:"+c.hostname+":\n"+changes[i]+"\n"
+                                c.updates <- common.DataUpdate{c.hostname, changes[i],common.GetTime()}
                             }
                             // sleep if service has been changed
                             time.Sleep(time.Second * c.timeout_sec)
