@@ -1,6 +1,7 @@
 package capture
 
 import "io"
+import "os"
 import "fmt"
 import "time"
 import "bufio"
@@ -12,6 +13,7 @@ var fileNotExists        = errors.New("File doesn't exist")
 var unableToCreateTarget = errors.New("Unable to create target")
 var listOfTargetsIsNil   = errors.New("List of targets is nil")
 var targetIsNil          = errors.New("New target is nil")
+var updatesChanIsNil     = errors.New("Updates chan is nil")
 var tail_path     string = "/usr/bin/tail"
 var docker_path   string = "/usr/bin/docker"
 
@@ -25,19 +27,21 @@ type Target struct {
     cmd      *exec.Cmd
     stdout   io.ReadCloser
     quit     chan bool
-    updates  chan Update
+    updates  chan common.DataUpdate
     active   bool
     area     string
 }
 
 type Runner struct {
-    updates     chan Update
-    quit        chan bool
-    MainQuit    chan bool
-    QuitDone    chan bool
-    targets     []*Target
-    timeout_sec time.Duration
-    running     bool
+    // updates     chan Update
+    updates       chan common.DataUpdate
+    globalUpdates chan common.DataUpdate
+    quit          chan bool
+    MainQuit      chan bool
+    QuitDone      chan bool
+    targets       []*Target
+    timeout_sec   time.Duration
+    running       bool
 }
 
 func NewTarget(cmd_line []string)(*Target,error){
@@ -86,7 +90,6 @@ func (t *Target)run()(error){
 }
 
 func(t *Target)capture()(){
-    //
     exit       := false
     lineReader := bufio.NewReader(t.stdout)
     var deffered string
@@ -100,12 +103,18 @@ func(t *Target)capture()(){
                     continue
                 }
                 if err == nil && !isPrefix {
+                    //
                     lineStr := string(line)
-                    var update Update
-                    update.path = t.path
-                    update.text = deffered+lineStr
+                    var update common.DataUpdate
+                    hostname,err     := os.Hostname()
+                    if err!=nil { hostname = "undefined" }
+                    update.Hostname  = hostname
+                    update.Area      = t.area
+                    update.Text      = deffered+lineStr
+                    update.Timestamp = common.GetTime()
                     t.updates<-update
                     deffered = ""
+                    //
                 }
                 if err!= nil { break }
             case <- t.quit:
@@ -115,17 +124,18 @@ func(t *Target)capture()(){
     fmt.Printf("capture has been finished for :%v\n",t.path)
     t.active = false
     t.cmd.Process.Kill()
-    //
 }
 
 
-func NewRunner(pathes []string)( *Runner , error){
+func NewRunner(pathes []string, globalUpdates chan common.DataUpdate)( *Runner , error){
     //
+    if globalUpdates == nil  { return nil, updatesChanIsNil }
     var r Runner
-    r.updates   = make(chan Update)
-    r.quit      = make(chan bool)
-    r.MainQuit  = make(chan bool)
-    r.QuitDone  = make(chan bool)
+    r.updates       = make(chan common.DataUpdate)
+    r.quit          = make(chan bool)
+    r.MainQuit      = make(chan bool)
+    r.QuitDone      = make(chan bool)
+    r.globalUpdates = globalUpdates
     for i:= range pathes {
         path:=pathes[i]
         t,err := NewTailTarget(path)
@@ -158,7 +168,8 @@ func (r *Runner)Handle()(){
                     if !ok {
                         break
                     }
-                    fmt.Println(u)
+                    //fmt.Println(u)
+                    r.globalUpdates <- u
             case <-r.MainQuit:
                 for i:= range r.targets {
                     target := r.targets[i]
