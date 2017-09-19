@@ -28,6 +28,15 @@ func (users Users)UserIsAllowed(message *tgbotapi.Message)(found bool){
     //
     //
 }
+func (users Users)AllUsersIds()(all_users []int){
+    for i := range users {
+        user        := users[i]
+        id         := user.ID
+        all_users = append(all_users, id)
+    }
+    return
+}
+
 
 
 
