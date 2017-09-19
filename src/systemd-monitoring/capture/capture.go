@@ -10,7 +10,10 @@ import "systemd-monitoring/common"
 
 var fileNotExists        = errors.New("File doesn't exist")
 var unableToCreateTarget = errors.New("Unable to create target")
+var listOfTargetsIsNil   = errors.New("List of targets is nil")
+var targetIsNil          = errors.New("New target is nil")
 var tail_path     string = "/usr/bin/tail"
+var docker_path   string = "/usr/bin/docker"
 
 type Update struct {
     path string
@@ -24,15 +27,17 @@ type Target struct {
     quit     chan bool
     updates  chan Update
     active   bool
+    area     string
 }
 
 type Runner struct {
     updates     chan Update
     quit        chan bool
-    MainQuit   chan bool
+    MainQuit    chan bool
     QuitDone    chan bool
     targets     []*Target
     timeout_sec time.Duration
+    running     bool
 }
 
 func NewTarget(cmd_line []string)(*Target,error){
@@ -52,9 +57,21 @@ func NewTailTarget(path string)(*Target,error){
     t,err := NewTarget(command)
     if err!=nil { return nil, unableToCreateTarget }
     t.path = path
+    t.area = "file"
     return t,nil
 
 }
+
+func NewDockerEventsTarget()(*Target,error){
+
+    var command = []string{docker_path,"events"}
+    t,err := NewTarget(command)
+    if err!=nil { return nil, unableToCreateTarget }
+    t.area = "docker_events"
+    return t,nil
+
+}
+
 
 func (t *Target)run()(error){
 
@@ -119,7 +136,7 @@ func NewRunner(pathes []string)( *Runner , error){
     }
     //
     r.timeout_sec       = 2
-    fmt.Printf("runner:\n%v\n",r)
+    // fmt.Printf("runner:\n%v\n",r)
     return &r, nil
 }
 
@@ -127,9 +144,12 @@ func (r *Runner)Handle()(){
     //
     for i:= range r.targets {
         target := r.targets[i]
-        target.run()
-        go target.capture()
+        err:=target.run()
+        if err == nil {
+            go target.capture()
+        }
     }
+    r.running = true
     finish := false
     //
     for {
@@ -155,4 +175,15 @@ func (r *Runner)Handle()(){
     }
 }
 
-
+func (r *Runner)AppendTarget(t *Target)(error){
+    if t == nil { return targetIsNil  }
+    t.updates = r.updates
+    t.quit    = r.quit
+    if r.running {
+        t.run()
+        go t.capture()
+    }
+    if r.targets==nil { r.targets = make([]*Target,0) }
+    r.targets  = append(r.targets, t)
+    return nil
+}

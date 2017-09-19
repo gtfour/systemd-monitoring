@@ -1,6 +1,7 @@
 package service
 
 import "os"
+import "fmt"
 import "time"
 import "os/exec"
 import "strconv"
@@ -220,7 +221,13 @@ func (c *Chain)Proceed()(){
                         changes,err := Compare(s, currentServiceState)
                         if err == nil && len(changes)>0 {
                             for i:= range changes {
-                                c.updates <- common.DataUpdate{c.hostname, changes[i],common.GetTime()}
+                                u:=common.DataUpdate{}
+                                u.Hostname  = c.hostname
+                                u.Area      = "service"
+                                u.Text      = changes[i]
+                                u.Timestamp = common.GetTime()
+                                fmt.Printf("Update: %v\n",u)
+                                c.updates <- u
                             }
                             // sleep if service has been changed
                             // time.Sleep(time.Second * c.timeout_sec)

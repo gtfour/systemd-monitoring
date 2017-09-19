@@ -14,7 +14,7 @@ func main() {
         for {
             select {
                 case u:=<-updates:
-                    fmt.Printf("Update:%v\n",u)
+                    fmt.Printf("Update:\n%s",u)
                 default:
                     time.Sleep(time.Second * 2)
             }
