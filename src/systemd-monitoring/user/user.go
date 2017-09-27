@@ -1,6 +1,7 @@
 package user
 
 import "fmt"
+import "strings"
 import "encoding/json"
 import "gopkg.in/telegram-bot-api.v4"
 
@@ -43,6 +44,8 @@ func (users Users)AllUsersIds()(all_users []int){
 
 
 func ParseUsers(users_string string)(users []tgbotapi.User,err error){
+    //fmt.Printf("users_string:%v\n",users_string)
+    users_string = strings.Replace(users_string, `'`, `"`, -1)
     err = json.Unmarshal([]byte(users_string), &users)
     return
 }

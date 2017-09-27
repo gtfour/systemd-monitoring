@@ -72,6 +72,9 @@ func parseInput()(listenAddress string,secretPhrase string,token string, users [
     //
     if allowed_users == "" { err = allowedUsersListIsEmpty ; return }
     users,err = user.ParseUsers(allowed_users)
+    if err != nil {
+        return
+    }
     //
     if listenAddress == "" { err = listenAddrIsEmpty ; return  }
     err              = common.ValidateSecretPhrase(secretPhrase)

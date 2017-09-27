@@ -8,6 +8,7 @@ import "bufio"
 import "os/exec"
 import "errors"
 import "systemd-monitoring/common"
+import "systemd-monitoring/filter"
 
 var fileNotExists        = errors.New("File doesn't exist")
 var unableToCreateTarget = errors.New("Unable to create target")
@@ -42,6 +43,7 @@ type Runner struct {
     targets       []*Target
     timeout_sec   time.Duration
     running       bool
+    logHandler    *filter.LogHandler
 }
 
 func NewTarget(cmd_line []string)(*Target,error){
@@ -57,11 +59,23 @@ func NewTarget(cmd_line []string)(*Target,error){
 func NewTailTarget(path string)(*Target,error){
 
     if !common.FileExists(path) { return nil, fileNotExists }
-    var command = []string{tail_path,"-f",path}
+    var command = []string{tail_path,"-F",path}
     t,err := NewTarget(command)
     if err!=nil { return nil, unableToCreateTarget }
     t.path = path
     t.area = "file"
+    return t,nil
+
+}
+
+func NewNginxLogTarget(path string)(*Target,error){
+
+    if !common.FileExists(path) { return nil, fileNotExists }
+    var command = []string{tail_path,"-F",path}
+    t,err := NewTarget(command)
+    if err!=nil { return nil, unableToCreateTarget }
+    t.path = path
+    t.area = "nginx-log"
     return t,nil
 
 }
@@ -145,7 +159,8 @@ func NewRunner(pathes []string, globalUpdates chan common.DataUpdate)( *Runner ,
         r.targets  = append( r.targets, t )
     }
     //
-    r.timeout_sec       = 2
+    r.timeout_sec = 2
+    r.logHandler  = filter.NewNginxLogHandler()
     // fmt.Printf("runner:\n%v\n",r)
     return &r, nil
 }
@@ -169,7 +184,11 @@ func (r *Runner)Handle()(){
                         break
                     }
                     //fmt.Println(u)
-                    r.globalUpdates <- u
+                    if u.Area == "nginx-log" {
+                        r.handleNginxLogs(u,r.globalUpdates)
+                    }else {
+                        r.globalUpdates <- u
+                    }
             case <-r.MainQuit:
                 for i:= range r.targets {
                     target := r.targets[i]
@@ -197,4 +216,11 @@ func (r *Runner)AppendTarget(t *Target)(error){
     if r.targets==nil { r.targets = make([]*Target,0) }
     r.targets  = append(r.targets, t)
     return nil
+}
+
+func(r *Runner)handleNginxLogs(u common.DataUpdate, globalUpdates chan common.DataUpdate)(){
+    _,status := r.logHandler.Handle(u.Text)
+    if status == "500" || status  == "502" {
+        r.globalUpdates <- u
+    }
 }
