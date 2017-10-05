@@ -70,15 +70,20 @@ func NewTailTarget(path string)(*Target,error){
 
 func NewNginxLogTarget(path string)(*Target,error){
     //
-    if !common.FileExists(path) { return nil, fileNotExists }
-    var command = []string{tail_path,"-F",path}
-    t,err := NewTarget(command)
-    if err!=nil { return nil, unableToCreateTarget }
-    t.path = path
+    t,err := NewTailTarget(path)
     t.area = "nginx-log"
-    return t,nil
+    return t,err
     //
 }
+
+func NewPythonTracebackTarget(path string)(*Target,error){
+    //
+    t,err := NewTailTarget(path)
+    t.area = "python-traceback"
+    return t,err
+    //
+}
+
 
 func NewDockerEventsTarget()(*Target,error){
 
@@ -125,6 +130,7 @@ func(t *Target)capture()(){
                     if err!=nil { hostname = "undefined" }
                     update.Hostname  = hostname
                     update.Area      = t.area
+                    update.Path      = t.path
                     update.Text      = deffered+lineStr
                     update.Timestamp = common.GetTime()
                     t.updates<-update
@@ -186,7 +192,7 @@ func (r *Runner)Handle()(){
                     }
                     fmt.Println(u)
                     if u.Area == "nginx-log" {
-                        r.handleNginxLogs(u,r.globalUpdates)
+                        r.handleNginxLog(u,r.globalUpdates)
                     }else {
                         r.globalUpdates <- u
                     }
@@ -219,8 +225,8 @@ func (r *Runner)AppendTarget(t *Target)(error){
     return nil
 }
 
-func(r *Runner)handleNginxLogs(u common.DataUpdate, globalUpdates chan common.DataUpdate)(){
-    _,status,beauty_message := r.logHandler.Handle(u.Text)
+func(r *Runner)handleNginxLog(u common.DataUpdate, globalUpdates chan common.DataUpdate)(){
+    _,status,beauty_message := r.logHandler.HandleNginxLog(u.Text)
     fmt.Printf("\nBeauty Message:\n%v\n",beauty_message)
     if status == "500" || status  == "502" {
         u.Text = beauty_message

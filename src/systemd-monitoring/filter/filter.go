@@ -10,14 +10,22 @@ type Line struct {
     Data []string `json:"data"`
 }
 
+type PythonTraceback struct {
+    Header string
+    Lines  []string
+    Footer string
+}
+
 type LogHandler struct {
-     handler  handling.Handler
-     filters  filtering.FilterList
-     target   *targets.Target
+    //
+    handler  handling.Handler
+    filters  filtering.FilterList
+    target   *targets.Target
+    //
 }
 
 
-func(l *LogHandler)Handle(log_entry string)(request string, status string, beauty_log string){
+func(l *LogHandler)HandleNginxLog(log_entry string)(request string, status string, beauty_log string){
     //
     //if l.target == nil {
     //    fmt.Printf("l.target is nil\n")

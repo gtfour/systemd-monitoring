@@ -38,6 +38,9 @@ func(r *Relay)Handle()(){
 func NewRelay(config common.AgentConfig)(*Relay,error){
     //
     var relay Relay
+    relay.updatesInput  = make(chan common.DataUpdate)
+    relay.updatesOutput = make(chan common.DataUpdate)
+    relay.quit          = make(chan bool)
     //
     return &relay, nil
 }
