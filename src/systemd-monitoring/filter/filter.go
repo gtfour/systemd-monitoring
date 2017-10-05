@@ -16,7 +16,8 @@ type LogHandler struct {
      target   *targets.Target
 }
 
-func(l *LogHandler)Handle(log_entry string)(request string, status string){
+
+func(l *LogHandler)Handle(log_entry string)(request string, status string, beauty_log string){
     //
     //if l.target == nil {
     //    fmt.Printf("l.target is nil\n")
@@ -43,6 +44,10 @@ func(l *LogHandler)Handle(log_entry string)(request string, status string){
                     //}
                     request = line.Data[4]
                     status  = line.Data[5]
+                }
+                for i:= range line.Data {
+                    entry := line.Data[i]
+                    beauty_log+=entry+"\n"
                 }
             }
         }

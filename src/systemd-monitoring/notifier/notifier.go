@@ -23,6 +23,7 @@ type SysLogNotifier struct {
 }
 
 func(n *NativeNotifier)Notify(u common.DataUpdate)(error){
+    //
     // TypeDataUpdate 
     //
     url := "http://"+n.Address+"/updates/recieve"
@@ -38,7 +39,8 @@ func(n *NativeNotifier)Notify(u common.DataUpdate)(error){
     messageByte,err := json.Marshal(m)
     if err != nil { return err }
     //
-    //sending json 
+    // sending json 
+    //
     req, err  := http.NewRequest("POST", url, bytes.NewBuffer(messageByte))
     req.Header.Set("Content-Type", "application/json")
     client    := &http.Client{}
@@ -49,8 +51,10 @@ func(n *NativeNotifier)Notify(u common.DataUpdate)(error){
     defer resp.Body.Close()
     //
     // print response
+    //
     body, _ := ioutil.ReadAll(resp.Body)
     fmt.Println("response Body:", string(body))
+    //
     //
     //
     return nil

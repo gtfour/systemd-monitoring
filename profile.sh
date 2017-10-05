@@ -1,1 +1,1 @@
-export GOPATH=/usr/share/go:/systemd-monitoring
+export GOPATH=/usr/share/go:/systemd-monitoring:/actuator/jumper

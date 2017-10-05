@@ -57,7 +57,7 @@ func NewTarget(cmd_line []string)(*Target,error){
 }
 
 func NewTailTarget(path string)(*Target,error){
-
+    //
     if !common.FileExists(path) { return nil, fileNotExists }
     var command = []string{tail_path,"-F",path}
     t,err := NewTarget(command)
@@ -65,11 +65,11 @@ func NewTailTarget(path string)(*Target,error){
     t.path = path
     t.area = "file"
     return t,nil
-
+    //
 }
 
 func NewNginxLogTarget(path string)(*Target,error){
-
+    //
     if !common.FileExists(path) { return nil, fileNotExists }
     var command = []string{tail_path,"-F",path}
     t,err := NewTarget(command)
@@ -77,7 +77,7 @@ func NewNginxLogTarget(path string)(*Target,error){
     t.path = path
     t.area = "nginx-log"
     return t,nil
-
+    //
 }
 
 func NewDockerEventsTarget()(*Target,error){
@@ -104,6 +104,7 @@ func (t *Target)run()(error){
 }
 
 func(t *Target)capture()(){
+    fmt.Printf("\n<<< Capturing changes in area:%v  path:%v\n",t.area,t.path)
     exit       := false
     lineReader := bufio.NewReader(t.stdout)
     var deffered string
@@ -183,7 +184,7 @@ func (r *Runner)Handle()(){
                     if !ok {
                         break
                     }
-                    //fmt.Println(u)
+                    fmt.Println(u)
                     if u.Area == "nginx-log" {
                         r.handleNginxLogs(u,r.globalUpdates)
                     }else {
@@ -219,8 +220,10 @@ func (r *Runner)AppendTarget(t *Target)(error){
 }
 
 func(r *Runner)handleNginxLogs(u common.DataUpdate, globalUpdates chan common.DataUpdate)(){
-    _,status := r.logHandler.Handle(u.Text)
+    _,status,beauty_message := r.logHandler.Handle(u.Text)
+    fmt.Printf("\nBeauty Message:\n%v\n",beauty_message)
     if status == "500" || status  == "502" {
+        u.Text = beauty_message
         r.globalUpdates <- u
     }
 }

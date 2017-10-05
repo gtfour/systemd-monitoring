@@ -50,5 +50,17 @@ func ValidateSecretPhrase(phrase string)(error){
     }
 }
 
-
-
+func IsStringIn(str string, strs_sets ...[]string)(yes bool){
+    for i := range strs_sets {
+        set := strs_sets[i]
+        for s := range set {
+            nStr := set[s]
+            if str == nStr {
+                yes = true
+                break
+            }
+        }
+        if yes == true { break }
+    }
+    return
+}
