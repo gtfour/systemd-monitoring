@@ -1,8 +1,10 @@
 package common
 
 import "os"
+import "fmt"
 import "time"
 import "os/exec"
+import "crypto/rand"
 import "errors"
 import "path/filepath"
 
@@ -64,3 +66,14 @@ func IsStringIn(str string, strs_sets ...[]string)(yes bool){
     }
     return
 }
+
+func GenId()(uuid string,err error) {
+    b := make([]byte, 16)
+    _,err= rand.Read(b)
+    if err!= nil {
+        return "",err
+    }
+    uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4],b[4:6],b[6:8],b[8:10],b[10:])
+    return uuid, nil
+}
+
