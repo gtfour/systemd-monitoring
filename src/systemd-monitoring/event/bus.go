@@ -2,24 +2,34 @@ package event
 
 import "fmt"
 import "time"
+import "sync"
 import "errors"
 
-var busNotReady = errors.New("Bus is not ready")
-var chanIsNil   = errors.New("Chan is nil")
-var EventBus    = NewBus()
+var busNotReady         = errors.New("Bus is not ready")
+var chanIsNil           = errors.New("Chan is nil")
+var eventNotFound       = errors.New("Event with such id is not found")
+var eventIsNil          = errors.New("Event is nil")
+var eventIsAlreadyExist = errors.New("Event with such id is already in list")
+var EventBus      = NewBus()
 
 type Bus struct {
     //
+    sync.RWMutex
     eventsList       []*Event
     events           chan *Event
     eventsIn         chan *Event
     eventsOut        []chan *Event
+    /*
     actionSets       chan ActionSet
     actionSetsIn     chan ActionSet
     actionSetsOut    []chan ActionSet
     conditionSet     chan ConditionSet
     conditionSetIn   chan ConditionSet
     conditionSetOut  []chan ConditionSet
+    */
+    actionsIn        chan   Action
+    actionsOut       []chan Action
+    //
     quitCh           chan bool
     timeout_sec      time.Duration
     ready            bool
@@ -27,20 +37,27 @@ type Bus struct {
 }
 
 func NewBus()(*Bus) {
+    //
     var bus Bus
     bus.events          = make(chan   *Event,100)
     bus.eventsIn        = make(chan   *Event,100)
     bus.eventsOut       = make([]chan *Event,0)
+    /*
     bus.actionSets      = make(chan   ActionSet)
     bus.actionSetsIn    = make(chan   ActionSet)
     bus.actionSetsOut   = make([]chan ActionSet,0)
     bus.conditionSet    = make(chan   ConditionSet)
     bus.conditionSetIn  = make(chan   ConditionSet)
     bus.conditionSetOut = make([]chan ConditionSet,0)
+    */
+    bus.actionsIn       = make(chan   Action)
+    bus.actionsOut      = make([]chan Action,100)
+    //
     bus.quitCh          = make(chan bool)
     bus.timeout_sec     = 2
     bus.ready           = true
     return &bus
+    //
 }
 
 func(b *Bus)SubscribeEvents(eventsOut chan *Event)(err error){
@@ -69,13 +86,22 @@ func(b *Bus)Handle()(error){
                 //
                 // fmt.Printf("Event: %v\n",e)
                 for i := range b.eventsOut {
-                    eventOut:=b.eventsOut[i]
-                    eventOut<-e
+                    eventsOut:=b.eventsOut[i]
+                    eventsOut<-e
                 }
                 //
                 //
             case eIn:=<-b.eventsIn:
-                b.events<-eIn
+                err := b.AppendEvent(eIn)
+                if err == nil {
+                    go eIn.Handle()
+                }
+                //b.events<-eIn
+            case aIn:=<-b.actionsIn:
+                for i := range b.actionsOut {
+                    actionsOut := b.actionsOut[i]
+                    actionsOut<-aIn
+                }
             case <-b.quitCh:
                 fmt.Printf("\n--Exiting--\n")
                 break
@@ -87,4 +113,34 @@ func(b *Bus)Handle()(error){
 
 func(b *Bus)Exit()(){
     b.quitCh<-true
+}
+
+func(b *Bus)GetEvent(event_id string)(event_copy Event, err error){
+    b.Lock()
+    defer b.Unlock()
+    for i := range b.eventsList {
+        event_ptr := b.eventsList[i]
+        fmt.Printf("event_ptr.id: %v event_id: %v\n",event_ptr.id,event_id)
+        if event_ptr!=nil && event_ptr.id==event_id {
+            event_copy =*event_ptr
+            return event_copy, nil
+        }
+    }
+    return event_copy,eventNotFound
+}
+
+func(b *Bus)AppendEvent(new_event *Event)(error){
+    b.Lock()
+    defer b.Unlock()
+    if new_event == nil { return eventIsNil }
+    new_event_id := new_event.id
+    // eventIsAlreadyExist
+    for i := range b.eventsList {
+        ev := b.eventsList[i]
+        if new_event_id == ev.id {
+            return eventIsAlreadyExist
+        }
+    }
+    b.eventsList = append(b.eventsList, new_event)
+    return nil
 }

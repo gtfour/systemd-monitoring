@@ -13,10 +13,13 @@ type Event struct {
    FlushAfter   int           // setting all conditions to unsatisfied after that's  minutes 
    DisableOn    int           // disable event on this period of time
    events       chan *Event
+   state        int
+   //
    //
 }
 
 func(e *Event)Handle()(){
+    //
     for {
         conditions_is_satisfied := e.conditionSet.IsSatisfied()
         if conditions_is_satisfied {
@@ -25,6 +28,7 @@ func(e *Event)Handle()(){
 
         }
     }
+    //
 }
 
 func(e *Event)SatisfyCondition(condition_id string)(error){

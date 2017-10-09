@@ -19,7 +19,8 @@ func main() {
     if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
         return
     }
-    var eventRecievedFrom int = 1
+    var eventRecievedFrom int    = 1
+    var previousEventId   string = ""
     for {
         select {
             case ev1:=<-eventOutChan1:
@@ -31,11 +32,19 @@ func main() {
             default:
                 event_id,_ := common.GenId()
                 if eventRecievedFrom == 1 {
-                    newEvent,_:=event.EventBus.NewEvent("my_name_event_1_"+event_id)
+                    // is retarding
+                    eventCopy,err:=event.EventBus.GetEvent(previousEventId)
+                    fmt.Printf("<<testing GetEvent by id %v : %v %v>>\n",previousEventId,eventCopy,err)
+                    newEvent,_:=event.EventBus.NewEvent(event_id)
                     eventWriteChan2 <- newEvent
+                    previousEventId = event_id
                 } else {
-                    newEvent,_:=event.EventBus.NewEvent("my_name_event_2_"+event_id)
+                    // is retarding
+                    eventCopy,err:=event.EventBus.GetEvent(previousEventId)
+                    fmt.Printf("<<testing GetEvent by id %v : %v %v>>\n",previousEventId,eventCopy,err)
+                    newEvent,_:=event.EventBus.NewEvent(event_id)
                     eventWriteChan1 <- newEvent
+                    previousEventId = event_id
                 }
                 time.Sleep(time.Second * 1)
         }
