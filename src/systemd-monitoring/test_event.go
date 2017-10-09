@@ -5,16 +5,17 @@ import "os/signal"
 import "fmt"
 import "time"
 import "systemd-monitoring/event"
+import "systemd-monitoring/common"
 
 func main() {
-
+    //
     go event.EventBus.Handle()
     eventWriteChan1,err1 := event.EventBus.GetEventsWritePipe()
     eventWriteChan2,err2 := event.EventBus.GetEventsWritePipe()
-    eventOutChan1   := make(chan *event.Event)
-    eventOutChan2   := make(chan *event.Event)
-    err3:=event.EventBus.SubscribeEvents(eventOutChan1)
-    err4:=event.EventBus.SubscribeEvents(eventOutChan2)
+    eventOutChan1        := make(chan *event.Event)
+    eventOutChan2        := make(chan *event.Event)
+    err3                 := event.EventBus.SubscribeEvents(eventOutChan1)
+    err4                 := event.EventBus.SubscribeEvents(eventOutChan2)
     if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
         return
     }
@@ -28,20 +29,23 @@ func main() {
                 fmt.Printf("event2: %v\n",ev2)
                 eventRecievedFrom = 2
             default:
+                event_id,_ := common.GenId()
                 if eventRecievedFrom == 1 {
-                    newEvent,_:=event.NewEvent()
+                    newEvent,_:=event.EventBus.NewEvent("my_name_event_1_"+event_id)
                     eventWriteChan2 <- newEvent
                 } else {
-                    newEvent,_:=event.NewEvent()
+                    newEvent,_:=event.EventBus.NewEvent("my_name_event_2_"+event_id)
                     eventWriteChan1 <- newEvent
                 }
                 time.Sleep(time.Second * 1)
         }
     }
     catchExit()
+    //
 }
 
 func catchExit()(){
+    //
     signalChan  := make(chan os.Signal, 1)
     cleanupDone := make(chan bool)
     signal.Notify(signalChan, os.Interrupt)
@@ -54,4 +58,5 @@ func catchExit()(){
     }()
     <-cleanupDone
     return
+    //
 }

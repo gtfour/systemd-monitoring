@@ -6,5 +6,7 @@ type ActionSet struct {
 }
 
 type Action struct {
-    id string
+    id        string
+    event_id  string
+    activated bool
 }

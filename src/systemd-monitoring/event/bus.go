@@ -9,6 +9,8 @@ var chanIsNil   = errors.New("Chan is nil")
 var EventBus    = NewBus()
 
 type Bus struct {
+    //
+    eventsList       []*Event
     events           chan *Event
     eventsIn         chan *Event
     eventsOut        []chan *Event
@@ -20,7 +22,8 @@ type Bus struct {
     conditionSetOut  []chan ConditionSet
     quitCh           chan bool
     timeout_sec      time.Duration
-    ready bool
+    ready            bool
+    //
 }
 
 func NewBus()(*Bus) {
@@ -38,8 +41,6 @@ func NewBus()(*Bus) {
     bus.timeout_sec     = 2
     bus.ready           = true
     return &bus
-
-
 }
 
 func(b *Bus)SubscribeEvents(eventsOut chan *Event)(err error){
@@ -65,11 +66,14 @@ func(b *Bus)Handle()(error){
     for {
         select {
             case e:=<-b.events:
-                fmt.Printf("Event: %v\n",e)
+                //
+                // fmt.Printf("Event: %v\n",e)
                 for i := range b.eventsOut {
                     eventOut:=b.eventsOut[i]
                     eventOut<-e
                 }
+                //
+                //
             case eIn:=<-b.eventsIn:
                 b.events<-eIn
             case <-b.quitCh:
