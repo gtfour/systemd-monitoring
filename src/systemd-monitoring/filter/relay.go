@@ -2,25 +2,27 @@ package filter
 //
 import "fmt"
 import "time"
+import "strings"
 import "systemd-monitoring/common"
+import "systemd-monitoring/config"
 //
 type Relay struct {
+
+    updatesInput      chan common.DataUpdate
+    updatesOutput     chan common.DataUpdate
+    quit              chan bool
+    timeoutSec        time.Duration
     //
-    updatesInput  chan common.DataUpdate
-    updatesOutput chan common.DataUpdate
-    quit          chan bool
-    timeoutSec    time.Duration
+    NginxLogMonitors  []config.NginxLogMonitor
+    FileMonitors      []config.FileMonitor
     //
+    //
+    nginxLogHandler   *LogHandler
+
 }
 
-type Matcher struct {
-    //
-
-    //
-}
 
 func(r *Relay)Handle()(){
-
     for {
         select {
             case u:=<-r.updatesInput:
@@ -34,13 +36,58 @@ func(r *Relay)Handle()(){
     }
 }
 
+func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
+
+    path:=du.Path
+    text:=du.Text
+    switch du.Area {
+        case "file":
+            skip := false
+            send := false
+            for a := range r.FileMonitors {
+                fm := r.FileMonitors[a]
+                if path == fm.Path {
+                    for aa := range fm.IgnoreString {
+                        stringToIgnore := fm.IgnoreString[aa]
+                        str_index      := strings.Index(text, stringToIgnore)
+                        if str_index >= 0 {
+                            skip = true
+                            break
+                        }
+                    }
+                }
+                if skip == true { break }
+                if send == true { r.updatesOutput <- du ; break }
+            }
+        case "nginx-log":
+            for b := range r.NginxLogMonitors {
+                nm := r.NginxLogMonitors[b]
+                if path == nm.Path {
+                    _,status,beauty_message := r.nginxLogHandler.HandleNginxLog(text)
+                    statusIsMatched         := common.IsStringIn(status, nm.MatchStatus)
+                    if statusIsMatched {
+                        du.Text = beauty_message
+                        r.updatesOutput <- du
+                    } else {
+                        // then ignore message
+                    }
+
+                }
+
+            }
+        default:
+            fmt.Printf("Unrecognized area type:\n")
+    }
+}
+
 //
-func NewRelay(config common.AgentConfig)(*Relay,error){
+func NewRelay(updatesInput chan common.DataUpdate, updatesOutput chan common.DataUpdate)(*Relay,error){
     //
     var relay Relay
-    relay.updatesInput  = make(chan common.DataUpdate)
-    relay.updatesOutput = make(chan common.DataUpdate)
-    relay.quit          = make(chan bool)
+    relay.updatesInput    = updatesInput
+    relay.updatesOutput   = updatesOutput
+    relay.nginxLogHandler = NewNginxLogHandler()
+    relay.quit            = make(chan bool)
     //
     return &relay, nil
 }

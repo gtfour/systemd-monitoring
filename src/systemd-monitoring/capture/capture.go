@@ -8,7 +8,7 @@ import "bufio"
 import "os/exec"
 import "errors"
 import "systemd-monitoring/common"
-import "systemd-monitoring/filter"
+//import "systemd-monitoring/filter"
 
 var fileNotExists        = errors.New("File doesn't exist")
 var unableToCreateTarget = errors.New("Unable to create target")
@@ -43,7 +43,7 @@ type Runner struct {
     targets       []*Target
     timeout_sec   time.Duration
     running       bool
-    logHandler    *filter.LogHandler
+    //logHandler    *filter.LogHandler
 }
 
 func NewTarget(cmd_line []string)(*Target,error){
@@ -167,7 +167,7 @@ func NewRunner(pathes []string, globalUpdates chan common.DataUpdate)( *Runner ,
     }
     //
     r.timeout_sec = 2
-    r.logHandler  = filter.NewNginxLogHandler()
+    //r.logHandler  = filter.NewNginxLogHandler()
     // fmt.Printf("runner:\n%v\n",r)
     return &r, nil
 }
@@ -190,12 +190,15 @@ func (r *Runner)Handle()(){
                     if !ok {
                         break
                     }
+                    r.globalUpdates <- u
+                    /*
                     fmt.Println(u)
                     if u.Area == "nginx-log" {
                         r.handleNginxLog(u,r.globalUpdates)
                     }else {
                         r.globalUpdates <- u
                     }
+                    */
             case <-r.MainQuit:
                 for i:= range r.targets {
                     target := r.targets[i]
@@ -225,6 +228,8 @@ func (r *Runner)AppendTarget(t *Target)(error){
     return nil
 }
 
+
+/*
 func(r *Runner)handleNginxLog(u common.DataUpdate, globalUpdates chan common.DataUpdate)(){
     _,status,beauty_message := r.logHandler.HandleNginxLog(u.Text)
     fmt.Printf("\nBeauty Message:\n%v\n",beauty_message)
@@ -233,3 +238,4 @@ func(r *Runner)handleNginxLog(u common.DataUpdate, globalUpdates chan common.Dat
         r.globalUpdates <- u
     }
 }
+*/

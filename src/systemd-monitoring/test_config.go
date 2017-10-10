@@ -4,8 +4,9 @@ import "fmt"
 import "systemd-monitoring/config"
 
 func main() {
-    sampleConfig:=`[{"type":"file-monitor","monitor":"{'ignore-string':['No such file or directory']}"},{"type":"nginx-log-monitor","monitor":"{'match-status':['500','502']}"}]`
-    ml,err:=config.ParseMonitors(sampleConfig)
+    //sampleConfig:=`[{"type":"file-monitor","monitor":"{'ignore-string':['No such file or directory']}"},{"type":"nginx-log-monitor","monitor":"{'match-status':['500','502']}"}]`
+    sampleEmptyConfig:=""
+    ml,err:=config.ParseMonitors(sampleEmptyConfig)
     for i := range ml {
         m := ml[i]
         fmt.Printf("Monitor: type: %s monitor_body: %v\n",m.Type,m.Monitor)

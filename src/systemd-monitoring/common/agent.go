@@ -1,5 +1,7 @@
 package common
 
+import "systemd-monitoring/config"
+
 type AgentConfig struct {
     SecretPhrase     string
     MasterAddress    string
@@ -8,5 +10,6 @@ type AgentConfig struct {
     ServiceList      []string
     PythonTracebacks []string
     DockerEvents     bool
+    Monitors         config.Monitors
 }
 
