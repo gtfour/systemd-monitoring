@@ -27,6 +27,8 @@ type Bus struct {
     conditionSetIn   chan ConditionSet
     conditionSetOut  []chan ConditionSet
     */
+    conditionsIn     chan   Condition
+    conditionsOut    []chan   Condition
     actionsIn        chan   Action
     actionsOut       []chan Action
     //
@@ -39,6 +41,7 @@ type Bus struct {
 func NewBus()(*Bus) {
     //
     var bus Bus
+    bus.eventsList      = make([]*Event,0)
     bus.events          = make(chan   *Event,100)
     bus.eventsIn        = make(chan   *Event,100)
     bus.eventsOut       = make([]chan *Event,0)
@@ -50,8 +53,13 @@ func NewBus()(*Bus) {
     bus.conditionSetIn  = make(chan   ConditionSet)
     bus.conditionSetOut = make([]chan ConditionSet,0)
     */
+    //
+    //
+    bus.conditionsIn    = make(chan   Condition)
+    bus.conditionsOut   = make([]chan Condition,100)
     bus.actionsIn       = make(chan   Action)
     bus.actionsOut      = make([]chan Action,100)
+    //
     //
     bus.quitCh          = make(chan bool)
     bus.timeout_sec     = 2
@@ -116,6 +124,7 @@ func(b *Bus)Exit()(){
 }
 
 func(b *Bus)GetEvent(event_id string)(event_copy Event, err error){
+    //
     b.Lock()
     defer b.Unlock()
     for i := range b.eventsList {
@@ -123,18 +132,32 @@ func(b *Bus)GetEvent(event_id string)(event_copy Event, err error){
         fmt.Printf("event_ptr.id: %v event_id: %v\n",event_ptr.id,event_id)
         if event_ptr!=nil && event_ptr.id==event_id {
             event_copy =*event_ptr
-            return event_copy, nil
+            return event_copy,nil
         }
     }
     return event_copy,eventNotFound
+    //
 }
+
+func(b *Bus)SetCondition(event_id string,condition_id string,state bool)(err error){
+    b.Lock()
+    defer b.Unlock()
+    for i := range b.eventsList {
+        ev := b.eventsList[i]
+        if ev.id == event_id {
+            err = ev.conditionSet.setConditionById(condition_id,state)
+            return err
+        }
+    }
+    return eventNotFound
+}
+
 
 func(b *Bus)AppendEvent(new_event *Event)(error){
     b.Lock()
     defer b.Unlock()
     if new_event == nil { return eventIsNil }
     new_event_id := new_event.id
-    // eventIsAlreadyExist
     for i := range b.eventsList {
         ev := b.eventsList[i]
         if new_event_id == ev.id {

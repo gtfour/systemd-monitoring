@@ -32,7 +32,7 @@ func(e *Event)Handle()(){
 }
 
 func(e *Event)SatisfyCondition(condition_id string)(error){
-    err := e.conditionSet.satisfy(condition_id)
+    err := e.conditionSet.setConditionById(condition_id,true)
     return err
 }
 

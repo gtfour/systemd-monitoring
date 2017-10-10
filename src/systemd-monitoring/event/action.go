@@ -30,5 +30,3 @@ func(a *Action)run()(){
 func(a *Action)finish()(){
     a.state = ACTION_STATE_PENDING
 }
-
-

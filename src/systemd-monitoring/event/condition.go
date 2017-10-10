@@ -31,14 +31,14 @@ func(c *ConditionSet)IsSatisfied()(yes bool){
     return
 }
 
-func(c *ConditionSet)satisfy(condition_id string)(error){
+func(c *ConditionSet)setConditionById(condition_id string,state bool)(error){
     c.Lock()
     defer c.Unlock()
     found := false
     for i := range c.conditions {
         condition := c.conditions[i]
         if condition.id == condition_id {
-            condition.satisfied = true
+            condition.satisfied = state
             found               = true
             break
         }
