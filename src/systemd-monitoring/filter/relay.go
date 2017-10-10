@@ -27,7 +27,8 @@ func(r *Relay)Handle()(){
         select {
             case u:=<-r.updatesInput:
                 fmt.Printf("Relay:updates:\n%v", u)
-                r.updatesOutput<-u
+                //r.updatesOutput<-u
+                r.passThroughMonitors(u)
             case <-r.quit:
                 break
             default:
@@ -43,7 +44,7 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
     switch du.Area {
         case "file":
             skip := false
-            send := false
+            //send := false
             for a := range r.FileMonitors {
                 fm := r.FileMonitors[a]
                 if path == fm.Path {
@@ -56,8 +57,7 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
                         }
                     }
                 }
-                if skip == true { break }
-                if send == true { r.updatesOutput <- du ; break }
+                if skip == true { break } else { r.updatesOutput <- du ; break }
             }
         case "nginx-log":
             for b := range r.NginxLogMonitors {
@@ -68,12 +68,11 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
                     if statusIsMatched {
                         du.Text = beauty_message
                         r.updatesOutput <- du
+                        break
                     } else {
                         // then ignore message
                     }
-
                 }
-
             }
         default:
             fmt.Printf("Unrecognized area type:\n")

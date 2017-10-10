@@ -75,6 +75,7 @@ func main(){
                 fmt.Printf("Unrecognized type:\n")
         }
     }
+    go relay.Handle()
     //
     for {
         select {
