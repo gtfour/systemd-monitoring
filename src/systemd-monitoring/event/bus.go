@@ -10,14 +10,14 @@ var chanIsNil           = errors.New("Chan is nil")
 var eventNotFound       = errors.New("Event with such id is not found")
 var eventIsNil          = errors.New("Event is nil")
 var eventIsAlreadyExist = errors.New("Event with such id is already in list")
-var EventBus      = NewBus()
+var EventBus            = NewBus()
 
 type Bus struct {
     //
     sync.RWMutex
     eventsList       []*Event
-    events           chan *Event
-    eventsIn         chan *Event
+    events           chan   *Event
+    eventsIn         chan   *Event
     eventsOut        []chan *Event
     /*
     actionSets       chan ActionSet
@@ -27,10 +27,10 @@ type Bus struct {
     conditionSetIn   chan ConditionSet
     conditionSetOut  []chan ConditionSet
     */
-    conditionsIn     chan   Condition
+    conditionsIn     chan     Condition
     conditionsOut    []chan   Condition
-    actionsIn        chan   Action
-    actionsOut       []chan Action
+    actionsIn        chan     Action
+    actionsOut       []chan   Action
     //
     quitCh           chan bool
     timeout_sec      time.Duration
@@ -68,15 +68,26 @@ func NewBus()(*Bus) {
     //
 }
 
-func(b *Bus)SubscribeEvents(eventsOut chan *Event)(err error){
+func(b *Bus)SubscribeEvents(eventsOutSingle chan *Event)(err error){
     if b.ready {
-        if eventsOut == nil { return chanIsNil }
-        b.eventsOut = append(b.eventsOut, eventsOut)
+        if eventsOutSingle == nil { return chanIsNil }
+        b.eventsOut = append(b.eventsOut, eventsOutSingle)
         return nil
     } else {
         return busNotReady
     }
 }
+
+func(b *Bus)SubscribeConditions(conditionsOutSingle chan Condition)(err error){
+    if b.ready {
+        if conditionsOutSingle == nil { return chanIsNil }
+        b.conditionsOut = append(b.conditionsOut, conditionsOutSingle)
+        return nil
+    } else {
+        return busNotReady
+    }
+}
+
 
 func(b *Bus)GetEventsWritePipe()(chan *Event,error){
     if b.ready {
@@ -90,21 +101,21 @@ func(b *Bus)Handle()(error){
     if !b.ready { return busNotReady }
     for {
         select {
-            case e:=<-b.events:
-                //
-                // fmt.Printf("Event: %v\n",e)
-                for i := range b.eventsOut {
-                    eventsOut:=b.eventsOut[i]
-                    eventsOut<-e
-                }
-                //
-                //
+            //case e:=<-b.events:
+            //    for i := range b.eventsOut {
+            //        eventsOut := b.eventsOut[i]
+            //        eventsOut <- e
+            //    }
             case eIn:=<-b.eventsIn:
                 err := b.AppendEvent(eIn)
                 if err == nil {
                     go eIn.Handle()
                 }
-                //b.events<-eIn
+            case cIn:=<-b.conditionsIn:
+                for i := range b.conditionsOut {
+                    conditionsOutSingle := b.conditionsOut[i]
+                    conditionsOutSingle<-cIn
+                }
             case aIn:=<-b.actionsIn:
                 for i := range b.actionsOut {
                     actionsOut := b.actionsOut[i]
@@ -165,5 +176,6 @@ func(b *Bus)AppendEvent(new_event *Event)(error){
         }
     }
     b.eventsList = append(b.eventsList, new_event)
+    b.SubscribeConditions(new_event.conditionsOut)
     return nil
 }

@@ -2,9 +2,12 @@ package filter
 //
 import "fmt"
 import "time"
+import "errors"
 import "strings"
 import "systemd-monitoring/common"
 import "systemd-monitoring/config"
+
+var chanIsNil           = errors.New("Chan is nil")
 //
 type Relay struct {
 
@@ -82,6 +85,10 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
 //
 func NewRelay(updatesInput chan common.DataUpdate, updatesOutput chan common.DataUpdate)(*Relay,error){
     //
+    if updatesInput == nil || updatesOutput == nil  {
+        return nil,chanIsNil
+    }
+    // 
     var relay Relay
     relay.updatesInput    = updatesInput
     relay.updatesOutput   = updatesOutput
