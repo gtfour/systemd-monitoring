@@ -42,8 +42,8 @@ func(r *Relay)Handle()(){
 
 func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
 
-    path:=du.Path
-    text:=du.Text
+    path := du.Path
+    text := du.Text
     switch du.Area {
         case "file":
             skip := false
@@ -77,6 +77,8 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
                     }
                 }
             }
+        case "python-traceback":
+            fmt.Printf("Handling python tracebacks\n")
         default:
             fmt.Printf("Unrecognized area type:\n")
     }

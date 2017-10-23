@@ -10,7 +10,6 @@ var EVENT_RUNNING  int = 8004
 var EVENT_SLEEPING int = 8006
 
 type Event struct {
-   //
    // sync.RWMutex
    Id            string        `json:"id"`
    ActionSet     ActionSet
@@ -22,7 +21,6 @@ type Event struct {
    actionsIn     chan Action
    conditionsOut chan Condition
    state         int
-   //
    //
 }
 

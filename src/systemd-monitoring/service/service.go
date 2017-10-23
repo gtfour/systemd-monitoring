@@ -8,6 +8,7 @@ import "strconv"
 import "errors"
 import "strings"
 import "systemd-monitoring/common"
+import "systemd-monitoring/event"
 
 var cantGetMainPid               = errors.New("can't get main pid")
 var unableToRetrieveServiceInfo  = errors.New("unable to get service information")

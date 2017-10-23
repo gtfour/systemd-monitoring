@@ -33,6 +33,7 @@ type NginxLogMonitor struct {
     Timeout      string   `json:"timeout"`
 }
 
+
 func ParseMonitors(monitors_string string)(ml Monitors,err error){
     err=json.Unmarshal([]byte(monitors_string),&ml)
     return

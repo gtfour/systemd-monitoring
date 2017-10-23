@@ -26,10 +26,17 @@ func main() {
     con3,_ := newEvent2.NewCondition("error-entry#1")
     con4,_ := newEvent2.NewCondition("error-entry#2")
 
-    var conditionsUpdate =  []event.Condition {con1,con2,con3,con4}
+    var conditionsUpdate =  []event.Condition {con1, con2, con3, con4}
+
 
     _,_=newEvent1.NewAction("pcap-log-service-restart")
     _,_=newEvent2.NewAction("crontab-service-restart")
+
+    customAction1 :=  event.Action{Id:"service-mongodb-restart",   Args:[]string{"mongodb","restart"}}
+    customAction2 :=  event.Action{Id:"service-postgresql-restart",Args:[]string{"postgresql","restart"}}
+
+    newEvent1.AppendAction(customAction1)
+    newEvent2.AppendAction(customAction2)
 
     eventsWriteChan<-newEvent1
     eventsWriteChan<-newEvent2
@@ -45,7 +52,7 @@ func main() {
     for {
         select {
             case a:=<-actionsOutChan:
-                fmt.Printf("++ ++ Action %v activated at: %v++ ++\n",a,common.GetTime())
+                fmt.Printf("++++ Action %v activated at: %v++++\n",a,common.GetTime())
             default:
                 fmt.Printf(":'default_stage':\n")
                 //

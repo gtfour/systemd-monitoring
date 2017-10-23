@@ -5,9 +5,10 @@ import "sync"
 import "errors"
 import "systemd-monitoring/common"
 
-var conditionNotFound   = errors.New("Condition not found")
-var conditionSetIsNil   = errors.New("ConditionSet is nil")
-var eventStateUndefined = errors.New("Unable to append condition to event. Event state is undefined")
+var conditionNotFound       = errors.New("Condition not found")
+var conditionSetIsNil       = errors.New("ConditionSet is nil")
+var eventStateUndefined     = errors.New("Unable to append condition to event. Event state is undefined")
+var conditionIsAlreadyExist = errors.New("Condition with such id is already in list")
 
 type ConditionSet struct {
     //
@@ -19,10 +20,12 @@ type ConditionSet struct {
 
 type Condition struct {
     //
-    Id        string `json:"id"`
-    EventId   string `json:"event-id"`
+    Id        string   `json:"id"`
+    EventId   string   `json:"event-id"`
+    Area      string   `json:"area"`
+    Args      []string `json:"args"`
     Satisfied bool
-    Count     int    `json:"count"`
+    Count     int      `json:"count"`
     //
 }
 
@@ -111,3 +114,17 @@ func(e *Event)NewCondition(props ...string)(c Condition,err error){
         return c, eventStateUndefined
     }
 }
+
+func(e *Event)AppendCondition(c Condition)(error){
+    new_condition_id := c.Id
+    for i := range e.ConditionSet.conditions {
+        con := e.ConditionSet.conditions[i]
+        if new_condition_id == con.Id {
+            return conditionIsAlreadyExist
+        }
+    }
+    c.EventId                 = e.Id
+    e.ConditionSet.conditions = append( e.ConditionSet.conditions, c )
+    return nil
+}
+
