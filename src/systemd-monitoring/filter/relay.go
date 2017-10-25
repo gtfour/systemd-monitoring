@@ -20,7 +20,8 @@ type Relay struct {
     FileMonitors      []config.FileMonitor
     //
     //
-    nginxLogHandler   *LogHandler
+    nginxLogHandler        *LogHandler
+    pythonTracebackHandlerSet []*PythonTracebackHandlerSet
 
 }
 

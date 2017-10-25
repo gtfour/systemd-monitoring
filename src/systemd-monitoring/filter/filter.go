@@ -10,12 +10,6 @@ type Line struct {
     Data []string `json:"data"`
 }
 
-type PythonTraceback struct {
-    Header string
-    Lines  []string
-    Footer string
-}
-
 type LogHandler struct {
     //
     handler  handling.Handler

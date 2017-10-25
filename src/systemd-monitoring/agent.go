@@ -78,6 +78,7 @@ func main(){
     go relay.Handle()
     //
     for {
+
         select {
             case u:=<-filteredUpdates:
                 err = notifier.Notify(u)
@@ -91,6 +92,7 @@ func main(){
 }
 
 func parseInput()(blank *common.AgentConfig,err error){
+    //
     //
     var agentConfig       common.AgentConfig
     var secretPhrase      string
@@ -131,8 +133,9 @@ func parseInput()(blank *common.AgentConfig,err error){
     if len(serviceList) == 1 && serviceList[0] == "" {
         serviceList = []string{}
     }
-    monitors_list,err_mon := config.ParseMonitors(monitors)
-    if (len(filesList)<1)&&(len(serviceList)<1)&&(docker_events == false)&&(len(nginxLogs)<1)&&( monitors=="" ) {
+    monitors_list,err_mon               := config.ParseMonitors(monitors)
+    ptraceback_handler_list, err_ptrace := config.ParsePythonTracebackHandlerConfig(python_tracebacks)
+    if (len(filesList)<1)&&(len(serviceList)<1)&&(docker_events == false)&&(len(nginxLogs)<1)&&( monitors=="" )&&( python_tracebacks=="" ) {
         err = nothingToDo
         return
     }
@@ -152,6 +155,7 @@ func parseInput()(blank *common.AgentConfig,err error){
     }
     //
     return &agentConfig, nil
+    //
     //
 }
 

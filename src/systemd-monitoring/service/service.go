@@ -34,10 +34,12 @@ type Service struct {
 
 type Chain struct {
     //
-    hostname    string
-    services    []*Service
-    processing  chan *Service
-    updates     chan common.DataUpdate
+    hostname     string
+    services     []*Service
+    processing   chan *Service
+    updates      chan common.DataUpdate
+    actionsOut   chan event.Action
+    conditionsIn chan event.Condition
     timeout_sec time.Duration
     //
 }
@@ -103,10 +105,10 @@ func GetMainPid(service_name string)(main_pid int, err error){
     is_dead := false
     for i := range status {
         line := status[i]
-        if strings.HasPrefix(line," Main PID:") {
+        if strings.HasPrefix(line,">>Main PID:") {
             main_pid_line = line
             break
-        } else if strings.HasPrefix(line, "   Active: inactive (dead)"){
+        } else if strings.HasPrefix(line, ">>Active: inactive(dead):") {
             main_pid = dead_pid
             is_dead  = true
             break
@@ -154,9 +156,18 @@ func NewServiceChain(service_names []string, updates chan common.DataUpdate)(*Ch
     } else {
         return nil, err
     }
-    chain.timeout_sec  = 1
-    chain.updates      = updates
-    chain.processing   = make(chan *Service)
+    chain.timeout_sec = 1
+    chain.updates     = updates
+    chain.processing  = make(chan *Service)
+    chain.actionsOut  = make(chan event.Action, 100)
+    err               = event.EventBus.SubscribeActions(chain.actionsOut)
+    if err != nil {
+        return nil, err
+    }
+    chain.conditionsIn,err = event.EventBus.GetConditionsWritePipe()
+    if err != nil {
+        return nil, err
+    }
     return &chain, nil
     //
     //
@@ -238,6 +249,10 @@ func (c *Chain)Proceed()(){
                     }
                 }
                 }()
+            case a := <-c.actionsOut:
+                if a.Area == "service" {
+                    fmt.Printf("Action for service area: %v",a)
+                }
             default:
                 time.Sleep(time.Second * c.timeout_sec)
         }

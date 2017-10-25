@@ -7,9 +7,9 @@ import "systemd-monitoring/event"
 func main(){
     //
     //
-    sampleConfig  := `[{"id":"python-traceback-file1.txt","check-timeout":"60","flush-after":"300","disable-on":"30","conditions":[{"id":"catched-python-traceback"}],"actions":[{"id":"service-cron-restart","area":"service","args":["cron","restart"]}]}]`
+    sampleConfig        := `[{"id":"python-traceback-file1.txt","check-timeout":"60","flush-after":"300","disable-on":"30","conditions":[{"id":"catched-python-traceback","area":"file","count":"5"}],"actions":[{"id":"service-cron-restart","area":"service","args":["cron","restart"]}]}]`
     eventConfigList,err := config.ParseEvents(sampleConfig)
-    events,_ := event.InputEvents(eventConfigList)
+    events,_            := event.InputEvents(eventConfigList)
     fmt.Printf(">>\nEvents:\n%v\n%v\n",events,err)
     for i := range events {
         e := events[i]
