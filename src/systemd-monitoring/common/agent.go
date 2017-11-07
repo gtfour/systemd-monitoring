@@ -8,7 +8,7 @@ type AgentConfig struct {
     FilesList        []string
     NginxLogs        []string
     ServiceList      []string
-    PythonTracebacks []string
+    PythonTracebacks []config.PythonTracebackHandlerConfig
     DockerEvents     bool
     Monitors         config.Monitors
 }

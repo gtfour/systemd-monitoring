@@ -33,10 +33,18 @@ func main(){
         fmt.Printf("Warning:%v\n",err)
     }
 
+    //
+    // follow simple file changes
+    // every data-change will be marked as "file"
+    //
     runner,err:= capture.NewRunner(agentConfig.FilesList, updates)
     if err !=nil {
         fmt.Printf("Warning:%v\n",err)
     }
+    //
+    // follow nginx log files
+    // every data-change will be marked as "nginx-log"
+    //
     for i:= range agentConfig.NginxLogs {
         nginxLogPath        := agentConfig.NginxLogs[i]
         nginxLogsTarget,err := capture.NewNginxLogTarget(nginxLogPath)
@@ -44,6 +52,10 @@ func main(){
             runner.AppendTarget(nginxLogsTarget)
         }
     }
+    //
+    // follow to output of docker-events command
+    // every data-change will be marked as "docker-events" 
+    //
     if agentConfig.DockerEvents {
         dockerEventsTarget,err := capture.NewDockerEventsTarget()
         if err != nil { fmt.Printf("Unable to create docker target\nerr:%v",err) }
@@ -51,14 +63,31 @@ func main(){
         if err != nil { fmt.Printf("Unable to append new target\nerr:%v",err) }
     }
 
+    //
+    // follow to file with python tracebacks
+    // every data-change will be marked as "python-traceback"
+    //
+    for i:= range agentConfig.PythonTracebacks {
+        ptPath       := agentConfig.PythonTracebacks[i].Path
+        ptTarget,err := capture.NewPythonTracebackTarget(ptPath)
+        if err == nil {
+            runner.AppendTarget(ptTarget)
+        }
+    }
+    //
+    //
+    //
+    //
+
     go runner.Handle()
     go chain.Proceed()
 
     // define filter relay
     filteredUpdates   := make(chan common.DataUpdate)
     relay,_           := filter.NewRelay(updates, filteredUpdates)
-
+    //
     for i := range agentConfig.Monitors {
+        //
         m := agentConfig.Monitors[i]
         switch m.Type {
             case config.FILE_MONITOR_TYPE:
@@ -74,11 +103,22 @@ func main(){
             default:
                 fmt.Printf("Unrecognized type:\n")
         }
+        //
     }
+    if len(agentConfig.PythonTracebacks)>0 {
+        var pythonTracebackHandlerSet filter.PythonTracebackHandlerSet
+        for i := range agentConfig.PythonTracebacks {
+            pTracebackHandlerConfig            := agentConfig.PythonTracebacks[i]
+            destFilePath                       := pTracebackHandlerConfig.Path
+            matchSectionContainingThisKeywords := pTracebackHandlerConfig.Keywords
+            pythonTracebackHandlerSet.AppendHandler( destFilePath, matchSectionContainingThisKeywords )
+        }
+        relay.PythonTracebackHandlerSet = pythonTracebackHandlerSet
+    }
+    //
     go relay.Handle()
     //
     for {
-
         select {
             case u:=<-filteredUpdates:
                 err = notifier.Notify(u)
@@ -128,28 +168,30 @@ func parseInput()(blank *common.AgentConfig,err error){
     // 
     filesList        := files.ParseFileList(files_list)
     nginxLogs        := files.ParseFileList(nginx_logs)
-    pythonTracebacks := files.ParseFileList(python_tracebacks)
+    //pythonTracebacks := files.ParseFileList(python_tracebacks)
     serviceList      := strings.Split(service_list," ")
     if len(serviceList) == 1 && serviceList[0] == "" {
         serviceList = []string{}
     }
     monitors_list,err_mon               := config.ParseMonitors(monitors)
-    ptraceback_handler_list, err_ptrace := config.ParsePythonTracebackHandlerConfig(python_tracebacks)
+    ptraceback_handler_config_list, err := config.ParsePythonTracebackHandlerConfig(python_tracebacks)
+    if err !=nil { return }
     if (len(filesList)<1)&&(len(serviceList)<1)&&(docker_events == false)&&(len(nginxLogs)<1)&&( monitors=="" )&&( python_tracebacks=="" ) {
         err = nothingToDo
         return
     }
     if masterAddress == "" { err =  masterAddrIsEmpty ; return  }
     err          = common.ValidateSecretPhrase(secretPhrase)
-    if err!=nil {return}
+    if err !=nil { return }
     //
     agentConfig.SecretPhrase     = secretPhrase
     agentConfig.MasterAddress    = masterAddress
     agentConfig.FilesList        = filesList
     agentConfig.NginxLogs        = nginxLogs
     agentConfig.ServiceList      = serviceList
-    agentConfig.PythonTracebacks = pythonTracebacks
+    agentConfig.PythonTracebacks = ptraceback_handler_config_list
     agentConfig.DockerEvents     = docker_events
+    //
     if err_mon == nil {
         agentConfig.Monitors         = monitors_list
     }

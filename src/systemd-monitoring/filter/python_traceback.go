@@ -12,8 +12,10 @@ var wrongArea           = errors.New("Wrong area")
 var pythonTracebackArea = "python-traceback"
 
 type PythonTracebackHandlerSet struct {
-    handlers []PythonTracebackHandler
+    handlers []*PythonTracebackHandler
 }
+
+
 
 
 
@@ -47,11 +49,11 @@ func(pths *PythonTracebackHandlerSet)Processing(messageInput common.DataUpdate)(
 }
 
 
-func NewPythonTracebackHandler(path string, header_keyword []string)(h *PythonTracebackHandler, err error){
+func(pths *PythonTracebackHandlerSet)AppendHandler(path string, header_keyword []string)(err error){
     //
     var handler PythonTracebackHandler
-    if len(header_keyword)==0   { return nil, emptyKeywordSlice }
-    if !common.FileExists(path) { return nil, fileDoesntExist   }
+    if len(header_keyword)==0   { return emptyKeywordSlice }
+    if !common.FileExists(path) { return fileDoesntExist   }
     matcher := func(phrase string)(bool){
         _, _, section_type := analyze.EscapeIndentSection(phrase, header_keyword)
         if section_type == analyze.INDENT_SECTION {
@@ -68,8 +70,9 @@ func NewPythonTracebackHandler(path string, header_keyword []string)(h *PythonTr
     handler.Matcher = matcher
     handler.Breaker = breaker
 
-    return &handler, nil
-    //
+    pths.handlers = append(pths.handlers, &handler)
+    return nil
+
 }
 
 type PythonTracebackHandler struct {

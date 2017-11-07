@@ -90,7 +90,7 @@ func NewDockerEventsTarget()(*Target,error){
     var command = []string{docker_path,"events"}
     t,err := NewTarget(command)
     if err!=nil { return nil, unableToCreateTarget }
-    t.area = "docker_events"
+    t.area = "docker-events"
     return t,nil
 
 }

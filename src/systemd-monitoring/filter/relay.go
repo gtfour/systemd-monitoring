@@ -16,12 +16,12 @@ type Relay struct {
     quit              chan bool
     timeoutSec        time.Duration
     //
-    NginxLogMonitors  []config.NginxLogMonitor
-    FileMonitors      []config.FileMonitor
+    NginxLogMonitors          []config.NginxLogMonitor
+    FileMonitors              []config.FileMonitor
+    PythonTracebackHandlerSet PythonTracebackHandlerSet
     //
     //
-    nginxLogHandler        *LogHandler
-    pythonTracebackHandlerSet []*PythonTracebackHandlerSet
+    nginxLogHandler           *LogHandler
 
 }
 
