@@ -175,7 +175,7 @@ func parseInput()(blank *common.AgentConfig,err error){
     }
     monitors_list,err_mon               := config.ParseMonitors(monitors)
     ptraceback_handler_config_list, err := config.ParsePythonTracebackHandlerConfig(python_tracebacks)
-    if err !=nil { return }
+    if err !=nil && python_tracebacks != "" { return }
     if (len(filesList)<1)&&(len(serviceList)<1)&&(docker_events == false)&&(len(nginxLogs)<1)&&( monitors=="" )&&( python_tracebacks=="" ) {
         err = nothingToDo
         return

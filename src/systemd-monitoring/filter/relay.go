@@ -79,7 +79,11 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
                 }
             }
         case "python-traceback":
-            fmt.Printf("Handling python tracebacks\n")
+            //fmt.Printf("Handling python tracebacks\n")
+            duOut,err:=r.PythonTracebackHandlerSet.Processing(du)
+            if err == nil {
+                r.updatesOutput<-duOut
+            }
         default:
             fmt.Printf("Unrecognized area type:\n")
     }
