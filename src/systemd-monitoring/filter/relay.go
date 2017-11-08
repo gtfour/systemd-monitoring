@@ -101,6 +101,7 @@ func NewRelay(updatesInput chan common.DataUpdate, updatesOutput chan common.Dat
     relay.updatesOutput   = updatesOutput
     relay.nginxLogHandler = NewNginxLogHandler()
     relay.quit            = make(chan bool)
+    relay.timeoutSec      = 2
     //
     return &relay, nil
 }

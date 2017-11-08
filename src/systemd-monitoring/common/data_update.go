@@ -11,11 +11,14 @@ type DataUpdate struct {
 }
 
 func(d *DataUpdate)String() string {
+    /*
     if d.Area == "docker-events" || d.Area == "service" {
         return "Hostname:"+d.Hostname+"\n"+"Area:"+d.Area+"\n"+d.Text+"\nTimestamp:"+d.Timestamp+"\n"
     } else {
         return "Hostname:"+d.Hostname+"\n"+"Area:"+d.Area+"\n"+"Path:"+d.Path+"\n"+d.Text+"\nTimestamp:"+d.Timestamp+"\n"
     }
+    */
+    return "Hostname:"+d.Hostname+"\n"+"Area:"+d.Area+"\n"+"Path:"+d.Path+"\n"+d.Text+"\nTimestamp:"+d.Timestamp+"\n"
 }
 
 

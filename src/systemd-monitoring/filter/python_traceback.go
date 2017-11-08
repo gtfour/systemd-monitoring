@@ -1,5 +1,6 @@
 package filter
 
+import "fmt"
 import "errors"
 import "systemd-monitoring/common"
 import "jumper/cuda/analyze"
@@ -87,6 +88,13 @@ type PythonTracebackHandler struct {
 }
 
 func(pth *PythonTracebackHandler)strProcessing(inputString string)(pte *pythonTracebackEntry,err error){
+    //
+    //
+    //
+    fmt.Printf("\n=== Testing matcher: %v Input String: %v ===\n",inputString,pth.Matcher(inputString))
+    //
+    //
+    //
     if pth.CurrentEntry == nil || pth.CreateNew {
         var NewEntry pythonTracebackEntry
         pth.CurrentEntry = &NewEntry
@@ -97,15 +105,19 @@ func(pth *PythonTracebackHandler)strProcessing(inputString string)(pte *pythonTr
         pth.CurrentEntry.InProgress = true
         return nil, nothingToSendYet
     }
-    if pth.Breaker(inputString){
+    if pth.Breaker(inputString) && pth.CurrentEntry.InProgress {
         pth.CurrentEntry.Footer     = inputString
         pth.CurrentEntry.InProgress = false
         pth.CreateNew               = true
         return pth.CurrentEntry, nil
-    } else {
+    }
+    if pth.CurrentEntry.InProgress && !pth.Breaker(inputString) {
         pth.CurrentEntry.Lines = append(pth.CurrentEntry.Lines, inputString)
     }
     return nil, nothingToSendYet
+    //
+    //
+    //
 }
 
 

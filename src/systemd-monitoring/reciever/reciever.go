@@ -52,6 +52,7 @@ func (r *Reciever)recieveUpdate(data  gin.H)(func (c *gin.Context)) {
             // parse decrypted json
             err_unmarshal := json.Unmarshal(updateByte, &update)
             if err_unmarshal == nil {
+                fmt.Printf(">> >> >> Recieved data_update: %v string_view: %v\n",update,update.String())
                 r.updates <- update
                 c.JSON( 200, gin.H{"status": "ok"})
             } else {

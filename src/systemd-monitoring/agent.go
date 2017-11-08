@@ -13,11 +13,23 @@ import "systemd-monitoring/service"
 import "systemd-monitoring/config"
 import "systemd-monitoring/filter"
 
+//
+import "log"
+import "net/http"
+import _ "net/http/pprof"
+//
+
 var parseError        = errors.New("cmd line parse error")
 var masterAddrIsEmpty = errors.New("Master address is empty")
 var nothingToDo       = errors.New("There are no any files to capture or services to monitor or task to monitor docker-events")
 
 func main(){
+
+    //
+    go func() {
+	log.Println(http.ListenAndServe("localhost:6060", nil))
+    }()
+    //
 
     agentConfig, err := parseInput()
     if err!=nil { fmt.Printf("Exiting:err:%v\n",err) ; return }
@@ -122,7 +134,6 @@ func main(){
         select {
             case u:=<-filteredUpdates:
                 err = notifier.Notify(u)
-                fmt.Printf("Update:%v\nnotifier_err:%v\n",u,err)
             default:
                 time.Sleep(time.Second * 2)
         }
