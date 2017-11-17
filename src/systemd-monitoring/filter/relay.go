@@ -60,8 +60,26 @@ func(r *Relay)passThroughMonitors(du common.DataUpdate)(){
                             break
                         }
                     }
+                    if skip == true {
+                        break
+                    } else if len(fm.MatchString) == 0 {
+                        r.updatesOutput <- du
+                        break
+                    }
+                    skip = true
+                    for bb := range fm.MatchString {
+                        stringToMatch := fm.MatchString[bb]
+                        str_index      := strings.Index(text, stringToMatch)
+                        if str_index >= 0 {
+                            skip = false
+                            break
+                        }
+                    }
+                    if skip == false {
+                        r.updatesOutput <- du
+                    }
+                    break // this break means that just one monitor per file is available to run
                 }
-                if skip == true { break } else { r.updatesOutput <- du ; break }
             }
         case "nginx-log":
             for b := range r.NginxLogMonitors {
